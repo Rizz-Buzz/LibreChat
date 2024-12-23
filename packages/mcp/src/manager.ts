@@ -1,15 +1,17 @@
 import { CallToolResultSchema } from '@modelcontextprotocol/sdk/types.js';
+import { EventEmitter } from 'events';
 import type { JsonSchemaType } from 'librechat-data-provider';
 import type { Logger } from 'winston';
-import type * as t from './types/mcp';
-import { formatToolContent } from './parsers';
 import { MCPConnection } from './connection';
 import { CONSTANTS } from './enum';
+import { formatToolContent } from './parsers';
+import type * as t from './types/mcp';
 
 export class MCPManager {
   private static instance: MCPManager | null = null;
   private connections: Map<string, MCPConnection> = new Map();
   private logger: Logger;
+  private eventEmitter = new EventEmitter();
 
   private static getDefaultLogger(): Logger {
     return {
@@ -164,7 +166,13 @@ export class MCPManager {
     }
   }
 
+  public on(event: 'toolsUpdated', listener: () => void): void {
+    this.eventEmitter.on(event, listener);
+  }
+
   public async loadManifestTools(manifestTools: t.LCToolManifest): Promise<void> {
+    let toolsChanged = false;
+
     for (const [serverName, connection] of this.connections.entries()) {
       try {
         if (connection.isConnected() !== true) {
@@ -175,16 +183,34 @@ export class MCPManager {
         const tools = await connection.fetchTools();
         for (const tool of tools) {
           const pluginKey = `${tool.name}${CONSTANTS.mcp_delimiter}${serverName}`;
-          manifestTools.push({
-            name: tool.name,
-            pluginKey,
-            description: tool.description ?? '',
-            icon: connection.iconPath,
-          });
+          const existingTool = manifestTools.find(t => t.pluginKey === pluginKey);
+
+          if (!existingTool || existingTool.description !== tool.description) {
+            toolsChanged = true;
+            // Update or add tool
+            if (existingTool) {
+              Object.assign(existingTool, {
+                name: tool.name,
+                description: tool.description ?? '',
+                icon: connection.iconPath,
+              });
+            } else {
+              manifestTools.push({
+                name: tool.name,
+                pluginKey,
+                description: tool.description ?? '',
+                icon: connection.iconPath,
+              });
+            }
+          }
         }
       } catch (error) {
         this.logger.error(`[MCP][${serverName}] Error fetching tools`, error);
       }
+    }
+
+    if (toolsChanged) {
+      this.eventEmitter.emit('toolsUpdated');
     }
   }
 
