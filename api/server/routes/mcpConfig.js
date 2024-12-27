@@ -41,8 +41,25 @@ router.post('/', async function (req, res) {
       return res.status(400).json({ error: 'Invalid mcpServers configuration' });
     }
 
-    // Update the config object
-    configYaml.mcpServers = mcpServers;
+    // Initialize mcpServers if it doesn't exist
+    if (!configYaml.mcpServers) {
+      configYaml.mcpServers = {};
+    }
+
+    // Merge new servers with existing ones
+    for (const [serverName, serverConfig] of Object.entries(mcpServers)) {
+      if (configYaml.mcpServers[serverName]) {
+        logger.info(`Updating existing MCP server: ${serverName}`);
+        // Merge with existing config, preserving any additional fields
+        configYaml.mcpServers[serverName] = {
+          ...configYaml.mcpServers[serverName],
+          ...serverConfig,
+        };
+      } else {
+        logger.info(`Adding new MCP server: ${serverName}`);
+        configYaml.mcpServers[serverName] = serverConfig;
+      }
+    }
 
     // Save the updated config back to file
     await fs.writeFile(configPath, yaml.dump(configYaml), 'utf8');
