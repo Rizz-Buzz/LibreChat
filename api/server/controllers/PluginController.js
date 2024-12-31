@@ -140,4 +140,6 @@ const getAvailableTools = async (req, res) => {
 module.exports = {
   getAvailableTools,
   getAvailablePluginsController,
+  checkPluginAuth,
+  filterUniquePlugins,
 };
