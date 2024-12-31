@@ -115,7 +115,10 @@ export class MCPConnection extends EventEmitter {
           return new StdioClientTransport({
             command: options.command,
             args: options.args,
-            env: options.env,
+            env: {
+              PATH: (process.env.PATH != null) ? process.env.PATH : '',
+              ...options.env,
+            },
           });
 
         case 'websocket':
