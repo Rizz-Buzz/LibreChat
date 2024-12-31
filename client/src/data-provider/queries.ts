@@ -1,31 +1,31 @@
-import {
-  QueryKeys,
-  dataService,
-  EModelEndpoint,
-  defaultOrderQuery,
-  defaultAssistantsVersion,
-} from 'librechat-data-provider';
-import { useQuery, useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
 import type {
-  UseInfiniteQueryOptions,
   QueryObserverResult,
+  UseInfiniteQueryOptions,
   UseQueryOptions,
 } from '@tanstack/react-query';
+import { useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-query';
 import type t from 'librechat-data-provider';
 import type {
   Action,
-  TPreset,
-  TPlugin,
-  ConversationListResponse,
-  ConversationListParams,
   Assistant,
+  AssistantDocument,
   AssistantListParams,
   AssistantListResponse,
-  AssistantDocument,
-  TEndpointsConfig,
-  TCheckUserKeyResponse,
+  ConversationListParams,
+  ConversationListResponse,
   SharedLinkListParams,
   SharedLinksResponse,
+  TCheckUserKeyResponse,
+  TEndpointsConfig,
+  TPlugin,
+  TPreset,
+} from 'librechat-data-provider';
+import {
+  EModelEndpoint,
+  QueryKeys,
+  dataService,
+  defaultAssistantsVersion,
+  defaultOrderQuery,
 } from 'librechat-data-provider';
 import { findPageForConversation } from '~/utils';
 
@@ -203,9 +203,9 @@ export const useAvailableToolsQuery = (
     [QueryKeys.tools],
     () => dataService.getAvailableTools(endpoint, version),
     {
-      refetchOnWindowFocus: false,
-      refetchOnReconnect: false,
-      refetchOnMount: false,
+      refetchOnWindowFocus: true,
+      refetchOnReconnect: true,
+      refetchOnMount: true,
       enabled,
     },
   );
